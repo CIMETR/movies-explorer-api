@@ -18,5 +18,5 @@
 # movies-explorer-api
 
 * [Доступ к серверу](https://diplomanti.nomoredomains.work)
-* [Доступ к api] (https://antidiplom.nomoredomains.work)
+* [Доступ к api](https://antidiplom.nomoredomains.work)
 * Публичный IP **51.250.65.85**
