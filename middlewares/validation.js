@@ -1,4 +1,13 @@
 const { celebrate, Joi } = require('celebrate');
+const validator = require('validator');
+
+const customValidate = (url) => {
+  const result = validator.isURL(url);
+  if (!result) {
+    throw new Error('URL is not valid');
+  }
+  return url;
+};
 
 const signupValidator = celebrate({
   body: Joi.object().keys({
@@ -17,17 +26,17 @@ const signinValidator = celebrate({
 
 const createMovieValidator = celebrate({
   body: Joi.object().keys({
-    country: Joi.string().min(2).max(100).required(),
-    director: Joi.string().min(2).max(100).required(),
+    movieId: Joi.number().integer().required(),
+    country: Joi.string().required(),
+    director: Joi.string().required(),
     duration: Joi.number().required(),
-    year: Joi.string().length(4).required(),
-    description: Joi.string().min(2).max(1500).required(),
-    image: Joi.string().required().pattern(/\/uploads\/\w*.(?:jpg|jpeg|png)$/),
-    trailer: Joi.string().required().pattern(/https?:\/\/(www.)?[\w-]*\.\w{2}\/?[a-z0-9\S]*/),
-    thumbnail: Joi.string().required().pattern(/\/uploads\/thumbnail_\w*.(?:jpg|jpeg|png)$/),
-    movieId: Joi.number().required(),
-    nameRU: Joi.string().min(2).max(100).required(),
-    nameEN: Joi.string().min(2).max(100).required(),
+    year: Joi.string().required(),
+    description: Joi.string().required(),
+    image: Joi.string().required().custom(customValidate),
+    trailerLink: Joi.string().required().custom(customValidate),
+    thumbnail: Joi.string().required().custom(customValidate),
+    nameRU: Joi.string().required(),
+    nameEN: Joi.string().required(),
   }),
 });
 
