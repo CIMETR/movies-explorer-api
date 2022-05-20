@@ -1,74 +1,72 @@
+const User = require('../models/user');
 const Movie = require('../models/movie');
-const {
-  MOVIE_NOT_FOUND,
-  DATA_NOT_VALID_TO_CREATE_MOVIE,
-  NO_RIGHT_TO_DELETE,
-} = require('../configs/messages');
-const { OK } = require('../configs/status_codes');
-const ForbiddenError = require('../errors/forbidden-error');
-const BadRequestError = require('../errors/bad-request-error');
-const NotFoundError = require('../errors/not-found-error');
 
+const NoValidateError = require('../errors/no-validate-err');
+const NotFoundError = require('../errors/not-found-err');
+const NotEnoughRightsError = require('../errors/not-enough-rights-err');
+const { errorMessages } = require('../constants');
+
+// Возвращает все сохранённые пользователем фильмы
 module.exports.getMovies = (req, res, next) => {
-  Movie.find({ owner: req.user._id })
-    .then((movies) => res.send(movies))
-    .catch((err) => next(err));
+  const userId = req.user._id;
+  return Movie.find({})
+    .then((movies) => res
+      .send(movies.filter((film) => film.owner.toString() === userId.toString())))
+    .catch(next);
 };
 
+// Создаёт фильм с переданными в теле данными о фильме
 module.exports.createMovie = (req, res, next) => {
-  const {
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailerLink,
-    nameRU,
-    nameEN,
-    thumbnail,
-    movieId,
-  } = req.body;
-  const owner = req.user._id;
+  const userId = req.user._id;
+  User.findById(userId)
+    .then(() => {
+      const {
+        country, director, duration, year, description,
+        image, trailer, nameRU, nameEN, thumbnail, movieId,
+      } = req.body;
 
-  Movie.create({
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailerLink,
-    nameRU,
-    nameEN,
-    thumbnail,
-    owner,
-    movieId,
-  })
-    .then((movie) => res.send(movie))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new BadRequestError(DATA_NOT_VALID_TO_CREATE_MOVIE));
-      } else {
-        next(err);
-      }
-    });
+      Movie.create({
+        country,
+        director,
+        duration,
+        year,
+        description,
+        image,
+        trailer,
+        nameRU,
+        nameEN,
+        thumbnail,
+        movieId,
+        owner: userId,
+      })
+        .then((movie) => res.send(movie))
+        .catch((err) => {
+          if (err.name === 'ValidationError') {
+            throw new NoValidateError(errorMessages.invalidData);
+          } else next(err);
+        });
+    })
+    .catch(next);
 };
 
-module.exports.removeMovieById = (req, res, next) => {
-  Movie.findById(req.params.movieId)
-    .then((movie) => {
-      if (!movie) {
-        next(new NotFoundError(MOVIE_NOT_FOUND));
-      } else if (movie.owner.toString() !== req.user._id) {
-        next(new ForbiddenError(NO_RIGHT_TO_DELETE));
-      } else {
-        return movie.delete()
-          .then(() => {
-            res.status(OK).send(movie);
-          });
-      }
-      return res;
+// Удаляет сохранённый фильм по id
+module.exports.deleteMovieById = (req, res, next) => {
+  const userId = req.user._id;
+  User.findById(userId)
+    .then(() => {
+      const { movieId } = req.params;
+      Movie.findById(movieId)
+        .orFail(new NotFoundError(errorMessages.notFoundMovie))
+        .then((movie) => {
+          if (!movie.owner._id.equals(userId)) {
+            throw new NotEnoughRightsError(errorMessages.notEnoughRights);
+          } else {
+            Movie.findByIdAndRemove(movieId)
+              .then((deletedMovie) => res.send(deletedMovie))
+              .catch(next);
+          }
+        })
+        .catch(next);
     })
-    .catch((err) => next(err));
+    .catch(next);
 };

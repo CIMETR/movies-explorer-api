@@ -1,31 +1,22 @@
 const router = require('express').Router();
-const { login, createUser } = require('../controllers/users');
+
+const { createUser, login, logout } = require('../controllers/users');
 const auth = require('../middlewares/auth');
-const { signupValidator, signinValidator } = require('../middlewares/validation');
-const { PAGE_NOT_FOUND, EXIT_COMPLETED } = require('../configs/messages');
-const NotFoundError = require('../errors/not-found-error');
+const { validateUser, validateLoginUser } = require('../middlewares/validations');
+const NotFoundError = require('../errors/not-found-err');
+const { errorMessages } = require('../constants');
 
-router.post('/signin', signinValidator, login);
+router.post('/signup', validateUser, createUser);
+router.post('/signin', validateLoginUser, login);
 
-router.post('/signup', signupValidator, createUser);
+router.use(auth);
+router.use('/users', require('./users'));
+router.use('/movies', require('./movies'));
 
-router.use('/', auth);
+router.post('/signout', logout);
 
-router.use('/users', auth, require('./users'));
-
-router.use('/movies', auth, require('./movies'));
-
-router.use('/logout', auth, (req, res) => {
-  res.clearCookie('jwt', {
-    maxAge: 3600000,
-    httpOnly: true,
-    sameSite: 'None',
-    secure: true,
-  }).send({ message: EXIT_COMPLETED });
-});
-
-router.use(() => {
-  throw new NotFoundError(PAGE_NOT_FOUND);
+router.all('*', () => {
+  throw new NotFoundError(errorMessages.notFoundData);
 });
 
 module.exports = router;

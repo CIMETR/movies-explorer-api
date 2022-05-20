@@ -2,34 +2,37 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const { errors } = require('celebrate');
 const helmet = require('helmet');
-const limiter = require('./middlewares/limiter');
-const cors = require('./middlewares/cors');
-const router = require('./routes/index');
-const handleErrors = require('./middlewares/error');
+const { errors } = require('celebrate');
+
+const {
+  PORT,
+  DB_URL,
+  NODE_ENV,
+  DB_SETTINGS,
+} = require('./config');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
-const { CURRENT_PORT, CURRENT_DATABASE_PATH } = require('./configs/index');
+const limiter = require('./middlewares/limiter');
+const routes = require('./routes');
+const cors = require('./middlewares/cors');
+const handlingErrors = require('./middlewares/handling-errors');
 
 const app = express();
 
+mongoose.connect(DB_URL, NODE_ENV === 'production' ? JSON.parse(DB_SETTINGS) : DB_SETTINGS);
+
 app.use(requestLogger);
 app.use(limiter);
+app.use(helmet());
+app.use(cors);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(helmet());
 app.use(cookieParser());
 
-mongoose.connect(CURRENT_DATABASE_PATH, {
-  useNewUrlParser: true,
-});
+app.use(routes);
 
-app.use(cors);
-app.use(router);
 app.use(errorLogger);
 app.use(errors());
-app.use(handleErrors);
+app.use(handlingErrors);
 
-app.listen(CURRENT_PORT, () => {
-  console.log(`App listen ${CURRENT_PORT}`);
-});
+app.listen(PORT);

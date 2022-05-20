@@ -1,65 +1,45 @@
 const mongoose = require('mongoose');
-const { INVALID_LINK_FORMAT } = require('../configs/messages');
-
-const linkRegExp = /(http:\/\/|https:\/\/)(www)*[a-z0-9\-._~:/?#[\]@!$&'()*+,;=]+#*/;
 
 const movieSchema = new mongoose.Schema({
   country: {
     type: String,
     required: true,
-    minlength: 2,
-    maxlength: 100,
+    trim: true,
   },
   director: {
     type: String,
     required: true,
-    minlength: 2,
-    maxlength: 100,
+    trim: true,
   },
   duration: {
     type: Number,
     required: true,
+    trim: true,
   },
   year: {
     type: String,
     required: true,
-    length: 4,
+    trim: true,
   },
   description: {
     type: String,
     required: true,
-    minlength: 2,
-    maxlength: 1500,
+    trim: true,
   },
   image: {
     type: String,
     required: true,
-    validate: {
-      validator(link) {
-        return linkRegExp.test(link);
-      },
-      message: INVALID_LINK_FORMAT,
-    },
+    trim: true,
   },
-  trailerLink: {
+  trailer: {
     type: String,
     required: true,
-    validate: {
-      validator(link) {
-        return linkRegExp.test(link);
-      },
-      message: INVALID_LINK_FORMAT,
-    },
+    trim: true,
   },
   thumbnail: {
     type: String,
     required: true,
-    validate: {
-      validator(link) {
-        return linkRegExp.test(link);
-      },
-      message: INVALID_LINK_FORMAT,
-    },
+    trim: true,
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
@@ -73,15 +53,16 @@ const movieSchema = new mongoose.Schema({
   nameRU: {
     type: String,
     required: true,
-    minlength: 2,
-    maxlength: 100,
+    trim: true,
   },
   nameEN: {
     type: String,
     required: true,
-    minlength: 2,
-    maxlength: 100,
+    trim: true,
   },
+},
+{
+  versionKey: false,
 });
 
 module.exports = mongoose.model('movie', movieSchema);
