@@ -19,18 +19,18 @@ const handlingErrors = require('./middlewares/handling-errors');
 
 const app = express();
 
-mongoose.connect(DB_URL, NODE_ENV === 'production' ? JSON.parse(DB_SETTINGS) : DB_SETTINGS);
-
 app.use(requestLogger);
 app.use(limiter);
 app.use(helmet());
-app.use(cors);
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use(routes);
+mongoose.connect(DB_URL, NODE_ENV === 'production' ? JSON.parse(DB_SETTINGS) : DB_SETTINGS);
 
+app.use(cors);
+app.use(routes);
 app.use(errorLogger);
 app.use(errors());
 app.use(handlingErrors);
